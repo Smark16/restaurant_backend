@@ -77,6 +77,8 @@ CHANNEL_LAYERS = {
        }
 }
 
+DEFAULT_CHANNEL_LAYER = 'default'
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
