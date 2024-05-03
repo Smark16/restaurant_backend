@@ -6,13 +6,19 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'email', 'full_name', 'image', 'location','contact','gender','verified']
 
 class MenuAdmin(admin.ModelAdmin):
-    list_display = ['id', 'descriptions','name', 'price', 'image', 'avg_rating']
+    list_display = ['id','descriptions','name', 'price', 'image', 'avg_rating']
 
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'order_date', 'contact', 'location', 'status']
 
 class OrderItemAdmin(admin.ModelAdmin):
     filter_horizontal = ("menu", )
+    list_display = ['id','user', 'order', 'total_quantity', 'get_menus']
+
+    def get_menus(self, obj):
+        return ", ".join([menu.name for menu in obj.menu.all()])
+    get_menus.short_description = 'Menus'  # Optional: to provide a header for the column
+
 
 class ReservationAdmin(admin.ModelAdmin):
     list_display = ['user','contact', 'email', 'party_size','table', 'reservation_date','status']

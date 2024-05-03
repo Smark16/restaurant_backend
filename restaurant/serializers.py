@@ -58,7 +58,7 @@ class MenuSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Menu
-        fields = ['id', 'descriptions', 'name', 'price', 'image', 'quantity', 'avg_rating']
+        fields = ['id','descriptions', 'name', 'price', 'image', 'quantity', 'avg_rating']
        
 
 
@@ -75,11 +75,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    menu = MenuSerializer(many=True)  
+    menu = serializers.PrimaryKeyRelatedField(queryset=Menu.objects.all(), many=True)
 
     class Meta:
         model = OrderItems
-        fields = ['id', 'order', 'menu', 'total_quantity']
+        fields = ['id', 'user','order', 'menu', 'total_quantity']
+        #depth = 1
 
    # def __init__(self, *args, **kwargs):
           #super(OrderItemSerializer, self).__init__(*args, **kwargs)

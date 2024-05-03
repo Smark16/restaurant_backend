@@ -40,6 +40,7 @@ urlpatterns = [
     path('update_status/<int:pk>', views.UpdateOrderStatus.as_view()),
     path('placed_orders', views.PlacedOrder.as_view()),
     path('order_items', views.OrderItem.as_view()),
+    path('post_OrderItems', views.PostOrderItems.as_view()),
 
     #user_urls
     path('update-username', views.UpdateUsername.as_view(), name='update-username'),

@@ -137,7 +137,7 @@ AUTH_USER_MODEL = 'restaurant.User'
 
 
 CORS_ALLOWED_ORIGINS = [
-    'https://restaurant-frontend-glsk.onrender.com',
+    'http://localhost:5173',
 ]
 
 

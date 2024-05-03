@@ -186,13 +186,27 @@ class single_order(generics.RetrieveDestroyAPIView):
         instance = self.get_object()
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+#retrieve specific order with specific items 
 class OrderItem(generics.ListCreateAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
 
+class PostOrderItems(generics.CreateAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemSerializer
+
+    def create(self, request, format=None):
+        # Assuming you're sending data in the format {'order': 1, 'menu': [1, 2, 3], 'total_quantity': 10}
+        serializer = self.get_serializer(data=request.data)
+        print(serializer)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
    
-#order-Deatil
+#retrieve details of the order
 class orderDetail(generics.ListAPIView):
     serializer_class = OrderItemSerializer
 
@@ -410,7 +424,7 @@ class productReview(generics.ListAPIView):
         menu = get_object_or_404(Menu, id=menu_id)
 
         # Filter reviews based on the menu item
-        queryset = Review.objects.filter(product=menu)
+        queryset = Review.objects.filter(product=menu).order_by('-id')
         return queryset
     
 class Messages(generics.ListAPIView):

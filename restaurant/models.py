@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
-from django.utils import timezone
-
 
 # Create your models here.
 class User(AbstractUser):
@@ -73,6 +71,7 @@ class Order(models.Model):
         return f"{self.id}"
     
 class OrderItems(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     menu = models.ManyToManyField(Menu, related_name='products')
     @property
@@ -81,10 +80,11 @@ class OrderItems(models.Model):
         for menu_item in self.menu.all():
             total_quantity += menu_item.quantity
         return total_quantity
+    
 
-
-    def __str__(self):
-        return self.menu.name
+def __str__(self):
+    menu_names = [menu_item.name for menu_item in self.menu.all()]
+    return ', '.join(menu_names) if menu_names else 'No Menu Items'
 
 class Table(models.Model):
     table_no = models.PositiveIntegerField()
