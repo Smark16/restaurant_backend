@@ -60,4 +60,5 @@ urlpatterns = [
 
     #Notificaions
     path('messages', views.Messages.as_view()),
+    path('usermsg/<int:user>', views.Usermsg)
 ]

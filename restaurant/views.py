@@ -241,7 +241,8 @@ class update_order(generics.UpdateAPIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
+#update order status  
 class UpdateOrderStatus(APIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -292,7 +293,7 @@ class UpdateReservationStatus(APIView):
         except reservation.DoesNotExist:
             return Response({"error": "Reservation doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
 
-    
+
 #update profile
 class update_profile(generics.UpdateAPIView):
     queryset = Profile.objects.all()
@@ -426,11 +427,21 @@ class productReview(generics.ListAPIView):
         # Filter reviews based on the menu item
         queryset = Review.objects.filter(product=menu).order_by('-id')
         return queryset
-    
+
+ #handle Notifications   
 class Messages(generics.ListAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
 
+@api_view(['GET'])
+def Usermsg(request, user):
+    try:
+      queryset = Notification.objects.filter(user=user)
+    except Notification.DoesNotExist:
+       return Response(status=status.HTTP_404_NOT_FOUND)
+    if request.method == 'GET':
+        serializer = NotificationSerializer(queryset, many=True)
+        return Response(serializer.data)
     
 #reset_password
 @csrf_exempt

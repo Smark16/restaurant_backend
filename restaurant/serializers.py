@@ -64,7 +64,7 @@ class MenuSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-
+#     user = serializers.ReadOnlyField(source='user.username')
     class Meta:
         model = Order
         fields = ['id', 'user', 'order_date', 'contact', 'location', 'status']
@@ -92,6 +92,7 @@ class TableSerializer(serializers.ModelSerializer):
           fields = ["id", "table_no"]
 
 class ReservationSerializer(serializers.ModelSerializer):
+     # user = serializers.ReadOnlyField(source='user.username')
      class Meta:
           model = Reservation
           fields =  ['id','user','contact', 'email', 'party_size','table', 'reservation_date', 'status']
