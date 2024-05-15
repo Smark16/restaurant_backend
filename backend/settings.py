@@ -140,6 +140,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://restaurant-frontend-glsk.onrender.com',
 ]
 
+CSRF_TRUSTED_ORIGINS = ['https://restaurant-backend-5.onrender.com']
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
