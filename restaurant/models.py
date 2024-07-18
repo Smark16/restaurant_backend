@@ -10,13 +10,11 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email= models.EmailField(max_length=100)
-    full_name=models.CharField(max_length=100)
     verified = models.BooleanField(default=False)
     contact = models.PositiveIntegerField(default=000000000)
     image = models.ImageField(default='images/profile.jpg', upload_to='images/')
     location = models.CharField(max_length=100, default=None, null=True)
-    gender = models.CharField(max_length=6, null=True)
-
+   
 
 def create_profile(sender, instance, created, **kwargs):
     if created:

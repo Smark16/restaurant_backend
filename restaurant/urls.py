@@ -12,16 +12,19 @@ urlpatterns = [
     path('profiles', views.all_profiles.as_view()),
     path('update_profile/<int:pk>', views.update_profile.as_view()),
     path('profile/<int:pk>', views.user_profile.as_view()),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+     path("get_user/<int:pk>", views.getUser.as_view()),
+     path("update_user/<int:pk>", views.updateUser.as_view()),
 
     #menu urls
     path('food_items', views.list_menu.as_view()),
     path('food_items/<int:pk>', views.single_item.as_view()),
     path('rating', views.ratings.as_view()),
-    path('orders', views.OrderList.as_view()),
-    path('orders/<int:pk>', views.singleOrder.as_view()),
-    path('order_detail/<int:pk>', views.orderDetail.as_view()),
+    path('orders', views.AllOrders.as_view()),
     path('latest_orders', views.LatestOrder.as_view()),
     path('userOrder/<int:user>', views.getUserOrder),
+    path('user_order/<int:user_id>', views.retrieveUserOrder),
+    path('user_items',views.userItems.as_view()),
 
     #reservation urls
     path('reservation', views.reservation.as_view()),
@@ -43,8 +46,6 @@ urlpatterns = [
     path('post_OrderItems', views.PostOrderItems.as_view()),
 
     #user_urls
-    path('update-username', views.UpdateUsername.as_view(), name='update-username'),
-    path('forgot_password', views.forgot_password),
     path('tables', views.Tables.as_view()),
     path('new_reservation', views.newReservations.as_view()),
 

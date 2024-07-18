@@ -8,7 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username','is_staff', 'is_customer']
+        fields = ['id', 'username','is_staff', 'is_customer', 'date_joined', 'email']
 
 class obtainSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -17,11 +17,9 @@ class obtainSerializer(TokenObtainPairSerializer):
         token['is_staff'] = user.is_staff
         token['is_customer'] = user.is_customer
         token['username'] = user.username
-        token['full_name'] = user.profile.full_name
         token['email'] = user.email 
         token['image'] = str(user.profile.image)
         token['verified'] = user.profile.verified
-        token['gender'] = user.profile.gender
         token['location'] = user.profile.location
         token['contact'] = user.profile.contact
 
@@ -61,30 +59,31 @@ class MenuSerializer(serializers.ModelSerializer):
         fields = ['id','descriptions', 'name', 'price', 'image', 'quantity', 'avg_rating']
        
 
-
-
 class OrderSerializer(serializers.ModelSerializer):
 #     user = serializers.ReadOnlyField(source='user.username')
     class Meta:
         model = Order
         fields = ['id', 'user', 'order_date', 'contact', 'location', 'status']
 
-    #def __init__(self, *args, **kwargs):
-          #super(OrderSerializer, self).__init__(*args, **kwargs)
-          #self.Meta.depth = 1
+    def to_representation(self, instance):
+         response =  super().to_representation(instance)
+         response['user'] = UserSerializer(instance.user).data
+         return response
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    menu = serializers.PrimaryKeyRelatedField(queryset=Menu.objects.all(), many=True)
-
+  
     class Meta:
         model = OrderItems
         fields = ['id', 'user','order', 'menu', 'total_quantity']
         #depth = 1
 
-   # def __init__(self, *args, **kwargs):
-          #super(OrderItemSerializer, self).__init__(*args, **kwargs)
-          #self.Meta.depth = 1
+    def to_representation(self, instance):
+         response =  super().to_representation(instance)
+         response['user'] = UserSerializer(instance.user).data
+         response['order'] = OrderSerializer(instance.order).data
+         response['menu'] = MenuSerializer(instance.menu.all(), many=True).data
+         return response
 
 class TableSerializer(serializers.ModelSerializer):
      class Meta:
@@ -113,4 +112,40 @@ class ProfileSerializer(serializers.ModelSerializer):
      user = serializers.ReadOnlyField(source='user.username')
      class Meta:
           model = Profile
-          fields = ['id', 'user', 'email', 'full_name', 'contact', 'image', 'location', 'gender' ]
+          fields = ['id', 'user', 'email','contact', 'image', 'location']
+
+# change password
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+    old_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('old_password', 'password', 'password2')
+
+    def validate(self, attrs):
+        # Check if the new password and its confirmation match
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        return attrs
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        # Verify that the provided old password matches the user's current password
+        if not user.check_password(value):
+            raise serializers.ValidationError({"old_password": "Old password is not correct"})
+        return value
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+
+        # make sure user is only able to update their own password
+        if user.pk != instance.pk:
+            raise serializers.ValidationError({"authorize": "You don't have permission for this user."})
+
+        # Set the new password for the user instance
+        instance.set_password(validated_data['password'])
+        instance.save()
+
+        return instance

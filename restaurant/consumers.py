@@ -25,7 +25,9 @@ class ChatConsumer(WebsocketConsumer):
         message = text_data_json['message']
         user_id = text_data_json['user']
 
-        print(user_id)
+        print(message, user_id)
+
+    
 
         async_to_sync(self.save_message(message, user_id))
        
@@ -33,16 +35,19 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             {
                 'type':'notification',
-                'message':message
+                'message':message,
+                'user':user_id
             }
         )
 
     def notification(self, event):
         message = event['message']
+        user_id = event['user']
 
         self.send(text_data=json.dumps({
             'type':'notification',
-            'message':message
+            'message':message,
+            'user':user_id
         }))
 
     

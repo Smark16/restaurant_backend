@@ -1,7 +1,6 @@
 
 from pathlib import Path
 import os
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
@@ -20,6 +19,7 @@ SECRET_KEY = 'django-insecure-a=#%g^pk65+9!g7*w(=%+()fg!iwnpvqel%(fr_e(^!hs7^zb3
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+
 
 
 # Application definition
@@ -137,18 +137,16 @@ AUTH_USER_MODEL = 'restaurant.User'
 
 
 CORS_ALLOWED_ORIGINS = [
-    'https://restaurant-frontend-glsk.onrender.com',
+    # 'https://restaurant-frontend-glsk.onrender.com',
+     'http://localhost:5173'
 ]
 
+# CSRF_TRUSTED_ORIGINS = ['https://restaurant-backend-5.onrender.com']
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ]

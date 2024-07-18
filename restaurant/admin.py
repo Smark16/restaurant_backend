@@ -3,7 +3,7 @@ from .models import *
 # Register your models here.
 class ProfileAdmin(admin.ModelAdmin):
     list_editable = ['verified']
-    list_display = ['user', 'email', 'full_name', 'image', 'location','contact','gender','verified']
+    list_display = ['user', 'email','image', 'location','contact','verified']
 
 class MenuAdmin(admin.ModelAdmin):
     list_display = ['id','descriptions','name', 'price', 'image', 'avg_rating']
@@ -35,7 +35,10 @@ class NotificationAdmin(admin.ModelAdmin):
 class TableAdmin(admin.ModelAdmin):
     list_display = ['id', 'table_no']
 
-admin.site.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['id', 'username','email','is_staff', 'is_customer', 'date_joined']
+
+admin.site.register(User, UserAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Menu, MenuAdmin)
 admin.site.register(Order, OrderAdmin)

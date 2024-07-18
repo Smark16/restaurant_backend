@@ -17,14 +17,31 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-
 from rest_framework.permissions import BasePermission
 
-class CanUpdateUsername(BasePermission):
-    def has_permission(self, request, view):
-        # Check if the user can update their username
-        return request.user.is_authenticated and request.user.has_perm('change_user_username')
+class getUser(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class updateUser(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return get_object_or_404(User, pk=self.kwargs["pk"])
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 # Create your views here.
 class ObtainPairView(TokenObtainPairView):
     serializer_class = obtainSerializer
@@ -80,22 +97,6 @@ class single_item(generics.RetrieveAPIView):
 class ratings(generics.ListAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-
-class OrderList(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-class singleOrder(generics.RetrieveAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except OrderList.DoesNotExist:
-            return Response({'detail': 'Order Does Not Exist'}, status=status.HTTP_404_NOT_FOUND)
 
 class LatestOrder(generics.ListAPIView):
     serializer_class = OrderSerializer
@@ -175,6 +176,17 @@ class ItemsViewSet(APIView):
        else:
            return Response(serializers.errors, status=status.HTTP_403_FORBIDDEN)
        
+class userItems(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, format=None):
+        serializers = MenuSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_200_OK)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+       
 #delete menu_item
 class single_order(generics.RetrieveDestroyAPIView):  
     queryset = Menu.objects.all()
@@ -192,12 +204,22 @@ class OrderItem(generics.ListCreateAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
 
+@api_view(['GET'])
+def retrieveUserOrder(request, user_id):
+    try:
+        userOrders = OrderItems.objects.filter(user=user_id)
+    except OrderItems.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    if request.method == 'GET':
+        serializer = OrderItemSerializer(userOrders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
 class PostOrderItems(generics.CreateAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
 
     def create(self, request, format=None):
-        # Assuming you're sending data in the format {'order': 1, 'menu': [1, 2, 3], 'total_quantity': 10}
         serializer = self.get_serializer(data=request.data)
         print(serializer)
         if serializer.is_valid():
@@ -207,14 +229,9 @@ class PostOrderItems(generics.CreateAPIView):
 
    
 #retrieve details of the order
-class orderDetail(generics.ListAPIView):
-    serializer_class = OrderItemSerializer
-
-    def get_queryset(self):
-        order_id = self.kwargs['pk']
-        order = Order.objects.get(id = order_id)
-        order_item = OrderItems.objects.filter(order=order)
-        return order_item
+class AllOrders(generics.ListAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
 
 #delete placed_order    
 class DeletePlacedOrder(generics.RetrieveDestroyAPIView):
@@ -299,6 +316,7 @@ class update_profile(generics.UpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class =  ProfileSerializer
 
+
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
     
@@ -349,25 +367,6 @@ class newReservations(generics.CreateAPIView):
         table.save()
         return self.create(request, *args, **kwargs)
 
-#update username
-class UpdateUsername(APIView):
-    permission_classes = [IsAuthenticated, CanUpdateUsername]
-
-    def put(self, request, *args, **kwargs):
-        new_username = request.data.get('new_username', None)
-
-        if new_username:
-            user = request.user
-            user.username = new_username
-            user.save()
-
-            new_serializer = UserSerializer(user)
-            # Ensure the user stays logged in after username change
-            update_session_auth_hash(request, user)
-
-            return Response({'message': 'Username updated successfully.'},new_serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'New username is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
 class Ratings(generics.ListAPIView):
     queryset = Rating.objects.all()
@@ -444,23 +443,19 @@ def Usermsg(request, user):
         return Response(serializer.data)
     
 #reset_password
-@csrf_exempt
-def forgot_password(request):
-    email = request.POST.get("email")
-    print(f"Received email: {email}")
-    verify = User.objects.filter(email=email).first()
-    if verify:
-        link = f"http://localhost:5173/forgot-password/{verify.id}"
-        send_mail(
-            'verify Account',
-            'please verify Your Account',
-            'smark@gmail.com',
-            [email],
-            fail_silently=False,
-            html_message=f"<p>Click on the LINK below</p><p>{link}</p>"
-        )
-        # Instead of returning a raw dictionary, return a JsonResponse
-        return JsonResponse({"bool":True, "user_id":verify.id}, status=status.HTTP_200_OK)
-    else:
-        # Similarly, return a JsonResponse here as well
-        return JsonResponse({"bool":False}, status=status.HTTP_403_FORBIDDEN)
+# change password
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def put(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.update(user, serializer.validated_data)
+            return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
