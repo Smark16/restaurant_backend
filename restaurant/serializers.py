@@ -88,13 +88,19 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class TableSerializer(serializers.ModelSerializer):
      class Meta:
           model = Table
-          fields = ["id", "table_no"]
+          fields = '__all__'
 
 class ReservationSerializer(serializers.ModelSerializer):
      # user = serializers.ReadOnlyField(source='user.username')
      class Meta:
           model = Reservation
           fields =  ['id','user','contact', 'email', 'party_size','table', 'reservation_date', 'status']
+
+     def to_representation(self, instance):
+         response =  super().to_representation(instance)
+         response['user'] = UserSerializer(instance.user).data
+         return response
+
 
 class ReviewSerializer(serializers.ModelSerializer):
      #image = serializers.ReadOnlyField(source='profile.image')

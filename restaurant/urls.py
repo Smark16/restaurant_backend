@@ -25,6 +25,7 @@ urlpatterns = [
     path('userOrder/<int:user>', views.getUserOrder),
     path('user_order/<int:user_id>', views.retrieveUserOrder),
     path('user_items',views.userItems.as_view()),
+    path('update_quantity/<int:pk>', views.updateQuantity.as_view()),
 
     #reservation urls
     path('reservation', views.reservation.as_view()),
@@ -44,6 +45,8 @@ urlpatterns = [
     path('placed_orders', views.PlacedOrder.as_view()),
     path('order_items', views.OrderItem.as_view()),
     path('post_OrderItems', views.PostOrderItems.as_view()),
+    path('post_table', views.postTable.as_view()),
+    path('table_status/<int:pk>', views.tableStaus.as_view()),
 
     #user_urls
     path('tables', views.Tables.as_view()),

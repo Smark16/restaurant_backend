@@ -259,6 +259,24 @@ class update_order(generics.UpdateAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class updateQuantity(APIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
+
+    def patch(self, request, *args, **kwargs):
+        menu_id = kwargs.get('pk')
+        quantity = request.data.get("quantity")
+
+        try:
+            menu = Menu.objects.get(pk=menu_id)
+            menu.quantity = quantity
+            menu.save()
+
+            serializer =self.serializer_class(menu)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Menu.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 #update order status  
 class UpdateOrderStatus(APIView):
     queryset = Order.objects.all()
@@ -441,6 +459,35 @@ def Usermsg(request, user):
     if request.method == 'GET':
         serializer = NotificationSerializer(queryset, many=True)
         return Response(serializer.data)
+
+class postTable(APIView):
+    serializer_class = TableSerializer
+
+    def post(self, request, format=None):
+        serializer = TableSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)  
+    
+class tableStaus(APIView):
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+
+    def patch(self, request, *args, **kwargs):
+        table_id = kwargs.get('pk')
+        is_booked = request.data.get("is_booked")
+
+        try:
+            table = Table.objects.get(pk=table_id)
+            table.is_booked = is_booked
+            table.save()
+
+            serializer =self.serializer_class(table)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Table.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        
     
 #reset_password
 # change password

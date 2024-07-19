@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import Notification, User
-from django.contrib.auth.models import AbstractUser
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -14,7 +13,7 @@ class ChatConsumer(WebsocketConsumer):
        
        self.accept()
 
-    def disconnect(self):
+    def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
@@ -26,8 +25,6 @@ class ChatConsumer(WebsocketConsumer):
         user_id = text_data_json['user']
 
         print(message, user_id)
-
-    
 
         async_to_sync(self.save_message(message, user_id))
        
@@ -50,7 +47,6 @@ class ChatConsumer(WebsocketConsumer):
             'user':user_id
         }))
 
-    
     def save_message(self, message, user_id):
         user = User.objects.get(id=user_id)
         Notification.objects.create(user=user, message=message)
