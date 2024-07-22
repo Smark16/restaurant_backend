@@ -453,12 +453,14 @@ class Messages(generics.ListAPIView):
 @api_view(['GET'])
 def Usermsg(request, user):
     try:
-      queryset = Notification.objects.filter(user=user)
+        queryset = Notification.objects.filter(user=user).order_by('-message_date')
     except Notification.DoesNotExist:
-       return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
     if request.method == 'GET':
         serializer = NotificationSerializer(queryset, many=True)
         return Response(serializer.data)
+
 
 class postTable(APIView):
     serializer_class = TableSerializer
