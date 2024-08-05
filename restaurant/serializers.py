@@ -8,7 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username','is_staff', 'is_customer', 'date_joined', 'email']
+        fields = ['id', 'username','is_staff', 'is_customer', 'date_joined', 'email', 'fcm_token']
 
 class obtainSerializer(TokenObtainPairSerializer):
     @classmethod

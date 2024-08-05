@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 class User(AbstractUser):
     is_staff = models.BooleanField(default=False)
     is_customer = models.BooleanField(default=False)
+    fcm_token = models.CharField(max_length=255, blank=True, null=True)  # Add this field to store FCM tokens
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

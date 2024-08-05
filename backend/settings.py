@@ -1,10 +1,13 @@
 
 from pathlib import Path
 import os
+FCM_API_KEY = 'BNK4QUakbgI1EuK6GXomrSYe8bWdoYNhDFH0mHtM5oRSL2prjMV8K8sUDWZjgxv_-WSm-Y67Q7bVdlusq13Lizg'
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FCM_SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'credentials', 'service_account.json')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -141,15 +144,9 @@ AUTH_USER_MODEL = 'restaurant.User'
 
 CORS_ALLOWED_ORIGINS = [
     'https://restaurant-frontend-glsk.onrender.com',
-    'http://localhost:5173'
+    'http://localhost:5173',
 ]
-
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
+CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

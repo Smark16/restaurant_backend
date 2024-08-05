@@ -13,11 +13,32 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from datetime import date
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import update_session_auth_hash
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
+from .utils import send_push_notification
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+
+
+# save fcm tokens
+class SaveFCMTokenView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+  
+    def patch(self, request, *args, **kwargs):
+        user = self.get_object()
+        if not user:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Make sure the user is authenticated
+        # if request.user.is_anonymous:
+        #     return Response({"error": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        fcm_token = request.data.get('fcm_token')
+        if fcm_token:
+            user.fcm_token = fcm_token
+            user.save()
+            return Response({"message": "FCM token updated successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "FCM token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
 class getUser(generics.RetrieveAPIView):
     queryset = User.objects.all()
@@ -224,6 +245,25 @@ class PostOrderItems(generics.CreateAPIView):
         print(serializer)
         if serializer.is_valid():
             serializer.save()
+
+        orderplaced = serializer.instance
+        user = orderplaced.user  # Ensure your Reservation model has a ForeignKey to User
+
+        # Notify all admin users
+        admin_users = User.objects.filter(is_staff=True)
+        if admin_users:
+            for admin in admin_users:
+                fcm_token = admin.fcm_token
+                if fcm_token:
+                    notification_title = "Order Placed"
+                    notification_body = f"{user.username} has placed an order."
+                    send_push_notification(fcm_token, notification_title, notification_body)
+
+                     # Save notification in the database
+                    Notification.objects.create(
+                        user=admin,
+                        message=f"{user.username} has made a reservation."
+                    )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -279,6 +319,8 @@ class updateQuantity(APIView):
         
 #update order status  
 class UpdateOrderStatus(APIView):
+    # authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
@@ -292,6 +334,21 @@ class UpdateOrderStatus(APIView):
             order.save()
 
             serializer = self.serializer_class(order)
+
+            order_user = order.user  
+            auth = request.user.is_authenticated
+            print(order_user, auth)
+            fcm_token = order_user.fcm_token
+            if fcm_token:
+                    notification_title = "Order Received"
+                    notification_body = f"{order_user.username} your Order has been {order.status}"
+                    send_push_notification(fcm_token, notification_title, notification_body)
+
+             # Save notification in the database
+                    Notification.objects.create(
+                        user=order_user,
+                        message=f"{order_user.username} your Order has been {order.status}"
+                    )
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -324,6 +381,20 @@ class UpdateReservationStatus(APIView):
             reservation.save()
 
             serializer = self.serializer_class(reservation)
+            reserv_user = reservation.user  
+            print(reserv_user)
+            fcm_token = reserv_user.fcm_token
+            if fcm_token:
+                    notification_title = "Reservation Message"
+                    notification_body = f"{reserv_user.username} your Reservation has been {reservation.status}"
+                    send_push_notification(fcm_token, notification_title, notification_body)
+
+                     # Save notification in the database
+                    Notification.objects.create(
+                        user=reserv_user,
+                        message=f"{reserv_user.username} your Reservation has been {reservation.status} "
+                    )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except reservation.DoesNotExist:
             return Response({"error": "Reservation doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
@@ -362,7 +433,6 @@ class Tables(generics.ListAPIView):
     serializer_class = TableSerializer
     
 class newReservations(generics.CreateAPIView):
-    permission_classes = [AllowAny]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
 
@@ -374,8 +444,28 @@ class newReservations(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         response['data'] = serializer.data
         response['response'] = "Table is successfully booked"
-        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
+        # Retrieve the reservation instance to get the user who made the reservation
+        reservation = serializer.instance
+        user = reservation.user  # Ensure your Reservation model has a ForeignKey to User
+
+        # Notify all admin users
+        admin_users = User.objects.filter(is_staff=True)
+        if admin_users:
+            for admin in admin_users:
+                fcm_token = admin.fcm_token
+                if fcm_token:
+                    notification_title = "Reservation Created"
+                    notification_body = f"{user.username} has made a reservation."
+                    send_push_notification(fcm_token, notification_title, notification_body)
+
+         # Save notification in the database
+                    Notification.objects.create(
+                        user=admin,
+                        message=f"{user.username} has made a reservation."
+                    )
+                    
+        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
     def post(self, request, *args, **kwargs):
         table = get_object_or_404(Table, pk=request.data['table'])
@@ -383,6 +473,7 @@ class newReservations(generics.CreateAPIView):
             return Response({"response": "Table is already booked"}, status=status.HTTP_200_OK)
         table.is_booked = True
         table.save()
+
         return self.create(request, *args, **kwargs)
 
         
@@ -490,8 +581,6 @@ class tableStaus(APIView):
         except Table.DoesNotExist:
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
         
-    
-#reset_password
 # change password
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

@@ -13,8 +13,8 @@ urlpatterns = [
     path('update_profile/<int:pk>', views.update_profile.as_view()),
     path('profile/<int:pk>', views.user_profile.as_view()),
     path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
-     path("get_user/<int:pk>", views.getUser.as_view()),
-     path("update_user/<int:pk>", views.updateUser.as_view()),
+    path("get_user/<int:pk>", views.getUser.as_view()),
+    path("update_user/<int:pk>", views.updateUser.as_view()),
 
     #menu urls
     path('food_items', views.list_menu.as_view()),
@@ -64,5 +64,8 @@ urlpatterns = [
 
     #Notificaions
     path('messages', views.Messages.as_view()),
-    path('usermsg/<int:user>', views.Usermsg)
+    path('usermsg/<int:user>', views.Usermsg),
+
+    #fcm tokens
+    path("fcm_token/<int:pk>", views.SaveFCMTokenView.as_view()),
 ]
