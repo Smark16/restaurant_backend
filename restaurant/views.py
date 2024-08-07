@@ -336,8 +336,6 @@ class UpdateOrderStatus(APIView):
             serializer = self.serializer_class(order)
 
             order_user = order.user  
-            auth = request.user.is_authenticated
-            print(order_user, auth)
             fcm_token = order_user.fcm_token
             if fcm_token:
                     notification_title = "Order Received"
